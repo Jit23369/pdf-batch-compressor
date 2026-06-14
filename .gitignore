@@ -1,0 +1,24 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Environment variables (contains secrets/local configs)
+.env
+
+# Build outputs
+dist/
+frontend/dist/
+build/
+frontend/build/
+
+# Local temp directories used by the app
+uploads/
+output/
+
+# OS/System files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

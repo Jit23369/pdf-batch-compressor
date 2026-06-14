@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf-compressor-backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      USE_GHOSTSCRIPT: ${USE_GHOSTSCRIPT:-true}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    image: node:20-alpine
+    container_name: pdf-compressor-frontend
+    working_dir: /app
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+      BACKEND_URL: http://backend:3000
+    command: >
+      sh -c "npm install &&
+             npm start"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+#  # Optional: Nginx reverse proxy
+#  nginx:
+#    image: nginx:alpine
+#    container_name: pdf-compressor-nginx
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#      - ./ssl:/etc/nginx/ssl:ro
+#    depends_on:
+#      - backend
+#      - frontend
+#    restart: unless-stopped
+
+volumes:
+  uploads:
+  output:
